@@ -15,14 +15,284 @@ enum Role {
   CASHIER
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String
-  role      Role     @default(WAITER)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  CLEANING
+}
 
+enum OrderStatus {
+  PENDING
+  PREPARING
+  READY
+  SERVED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  UPI
+  ONLINE
+}
+
+enum StockTransactionType {
+  IN
+  OUT
+  ADJUSTMENT
+  WASTE
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  ORDERED
+  RECEIVED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PAID
+  PARTIAL
+}
+
+model User {
+  id              Int                @id @default(autoincrement())
+  email           String             @unique
+  password        String
+  name            String
+  role            Role               @default(WAITER)
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  orders          Order[]            @relation("WaiterOrders")
+  stockLogs       StockTransaction[]
+  expensesCreated Expense[]
   @@map("users")
 }
+
+model Table {
+  id          Int         @id @default(autoincrement())
+  tableNumber String      @unique @map("table_number")
+  capacity    Int         @default(4)
+  status      TableStatus @default(AVAILABLE)
+  location    String?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  orders      Order[]
+  @@map("tables")
+}
+
+model Category {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  description String?
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  menuItems   MenuItem[]
+  @@map("categories")
+}
+
+model MenuItem {
+  id              Int          @id @default(autoincrement())
+  name            String
+  description     String?
+  price           Float
+  isAvailable     Boolean      @default(true) @map("is_available")
+  prepTimeMinutes Int          @default(15) @map("prep_time_minutes")
+  imageUrl        String?      @map("image_url")
+  categoryId      Int          @map("category_id")
+  category        Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+  recipeItems     RecipeItem[]
+  orderItems      OrderItem[]
+  @@map("menu_items")
+}
+
+model Ingredient {
+  id                 Int                  @id @default(autoincrement())
+  name               String               @unique
+  category           String?
+  unit               String
+  currentStock       Float                @default(0) @map("current_stock")
+  minStockLevel      Float                @default(10) @map("min_stock_level")
+  costPerUnit        Float                @default(0) @map("cost_per_unit")
+  supplierId         Int?                 @map("supplier_id")
+  supplier           Supplier?            @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+  recipeItems        RecipeItem[]
+  stockTransactions  StockTransaction[]
+  purchaseOrderItems PurchaseOrderItem[]
+  @@map("ingredients")
+}
+
+model RecipeItem {
+  id               Int        @id @default(autoincrement())
+  menuItemId       Int        @map("menu_item_id")
+  menuItem         MenuItem   @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  ingredientId     Int        @map("ingredient_id")
+  ingredient       Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  quantityRequired Float      @map("quantity_required")
+  unit             String
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+  @@unique([menuItemId, ingredientId])
+  @@map("recipe_items")
+}
+
+model Supplier {
+  id             Int               @id @default(autoincrement())
+  name           String
+  contactPerson  String?           @map("contact_person")
+  email          String?
+  phone          String?
+  address        String?
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+  ingredients    Ingredient[]
+  purchaseOrders PurchaseOrder[]
+  expenses       Expense[]
+  invoices       SupplierInvoice[]
+  @@map("suppliers")
+}
+
+model StockTransaction {
+  id           Int                  @id @default(autoincrement())
+  type         StockTransactionType
+  quantity     Float
+  reason       String?
+  ingredientId Int                  @map("ingredient_id")
+  ingredient   Ingredient           @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  userId       Int?                 @map("user_id")
+  user         User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt    DateTime             @default(now()) @map("created_at")
+  @@map("stock_transactions")
+}
+
+model PurchaseOrder {
+  id           Int                 @id @default(autoincrement())
+  orderNumber  String              @unique @map("order_number")
+  supplierId   Int                 @map("supplier_id")
+  supplier     Supplier            @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  status       PurchaseOrderStatus @default(DRAFT)
+  totalAmount  Float               @default(0) @map("total_amount")
+  expectedDate DateTime?           @map("expected_date")
+  notes        String?
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+  items        PurchaseOrderItem[]
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              Int           @id @default(autoincrement())
+  purchaseOrderId Int           @map("purchase_order_id")
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  ingredientId    Int           @map("ingredient_id")
+  ingredient      Ingredient    @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  quantity        Float
+  unitPrice       Float         @default(0) @map("unit_price")
+  totalPrice      Float         @default(0) @map("total_price")
+  @@map("purchase_order_items")
+}
+
+model Order {
+  id            Int           @id @default(autoincrement())
+  orderNumber   String        @unique @map("order_number")
+  tableId       Int?          @map("table_id")
+  table         Table?        @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  waiterId      Int?          @map("waiter_id")
+  waiter        User?         @relation("WaiterOrders", fields: [waiterId], references: [id], onDelete: SetNull)
+  status        OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
+  paymentMethod PaymentMethod @default(CASH) @map("payment_method")
+  subtotal      Float         @default(0)
+  tax           Float         @default(0)
+  discount      Float         @default(0)
+  totalAmount   Float         @default(0) @map("total_amount")
+  notes         String?
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  items         OrderItem[]
+  @@map("orders")
+}
+
+model OrderItem {
+  id         Int         @id @default(autoincrement())
+  orderId    Int         @map("order_id")
+  order      Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId Int         @map("menu_item_id")
+  menuItem   MenuItem    @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  quantity   Int         @default(1)
+  price      Float
+  status     OrderStatus @default(PENDING)
+  notes      String?
+  createdAt  DateTime    @default(now()) @map("created_at")
+  @@map("order_items")
+}
+
+model ExpenseCategory {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  expenses    Expense[]
+  @@map("expense_categories")
+}
+
+model Expense {
+  id          Int             @id @default(autoincrement())
+  title       String
+  amount      Float
+  date        DateTime        @default(now())
+  description String?
+  categoryId  Int             @map("category_id")
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  supplierId  Int?            @map("supplier_id")
+  supplier    Supplier?       @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  receiptUrl  String?         @map("receipt_url")
+  userId      Int?            @map("user_id")
+  user        User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  @@map("expenses")
+}
+
+model SupplierInvoice {
+  id            Int           @id @default(autoincrement())
+  invoiceNumber String        @map("invoice_number")
+  supplierId    Int?          @map("supplier_id")
+  supplier      Supplier?     @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  invoiceDate   DateTime      @default(now()) @map("invoice_date")
+  totalAmount   Float         @default(0) @map("total_amount")
+  status        InvoiceStatus @default(UNPAID)
+  fileUrl       String?       @map("file_url")
+  rawOcrData    String?       @map("raw_ocr_data")
+  isProcessed   Boolean       @default(false) @map("is_processed")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  items         InvoiceItem[]
+  @@map("supplier_invoices")
+}
+
+model InvoiceItem {
+  id          Int             @id @default(autoincrement())
+  invoiceId   Int             @map("invoice_id")
+  invoice     SupplierInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Float           @default(1)
+  unitPrice   Float           @default(0) @map("unit_price")
+  totalPrice  Float           @default(0) @map("total_price")
+  @@map("invoice_items")
+}
+

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../store/useAuthStore";
 
 const ROLE_COLORS = {
@@ -9,10 +9,27 @@ const ROLE_COLORS = {
   CASHIER: "bg-teal-500/20 text-teal-300 border-teal-500/40",
 };
 
+const ALL_NAV_ITEMS = [
+  { path: "/dashboard", label: "Dashboard", roles: ["OWNER", "MANAGER", "CHEF", "WAITER", "CASHIER"] },
+  { path: "/tables", label: "Tables", roles: ["OWNER", "MANAGER", "CHEF", "WAITER", "CASHIER"] },
+  { path: "/orders", label: "Orders", roles: ["OWNER", "MANAGER", "CHEF", "WAITER", "CASHIER"] },
+  { path: "/menu", label: "Menu", roles: ["OWNER", "MANAGER", "CHEF"] },
+  { path: "/recipes", label: "Recipes", roles: ["OWNER", "MANAGER", "CHEF"] },
+  { path: "/ingredients", label: "Ingredients", roles: ["OWNER", "MANAGER", "CHEF"] },
+  { path: "/inventory", label: "Inventory", roles: ["OWNER", "MANAGER", "CHEF"] },
+  { path: "/stock-transactions", label: "Stock Logs", roles: ["OWNER", "MANAGER", "CHEF"] },
+  { path: "/suppliers", label: "Suppliers", roles: ["OWNER", "MANAGER"] },
+  { path: "/purchase-orders", label: "Purchase Orders", roles: ["OWNER", "MANAGER"] },
+  { path: "/staff", label: "Staff", roles: ["OWNER", "MANAGER"] },
+  { path: "/expenses", label: "Expenses", roles: ["OWNER", "MANAGER", "CASHIER"] },
+  { path: "/reports", label: "Reports", roles: ["OWNER", "MANAGER"] },
+];
+
 export default function Navbar() {
   const user = useAuth((state) => state.user);
   const logout = useAuth((state) => state.logout);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     await logout();
@@ -22,14 +39,17 @@ export default function Navbar() {
   const roleStyle =
     ROLE_COLORS[user?.role] || "bg-slate-700 text-slate-200 border-slate-600";
 
+  const visibleNavs = user
+    ? ALL_NAV_ITEMS.filter((item) => item.roles.includes(user.role))
+    : [];
+
   return (
-    <nav className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 text-white px-6 py-3.5 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <nav className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 text-white sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
         <Link
           to="/"
-          className="flex items-center gap-2.5 text-xl font-bold tracking-tight hover:opacity-90 transition-opacity"
+          className="flex items-center gap-2.5 text-xl font-bold tracking-tight hover:opacity-90 transition-opacity shrink-0"
         >
-          <span className="text-2xl">🍽️</span>
           <span className="bg-linear-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
             RestaurantOS
           </span>
@@ -38,12 +58,6 @@ export default function Navbar() {
         <div className="flex items-center gap-4">
           {user ? (
             <>
-              <Link
-                to="/dashboard"
-                className="text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors"
-              >
-                Dashboard
-              </Link>
               <div className="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700/60">
                 <span className="text-sm font-medium text-slate-200">
                   {user.name}
@@ -79,6 +93,30 @@ export default function Navbar() {
           )}
         </div>
       </div>
+
+      {user && visibleNavs.length > 0 && (
+        <div className="border-t border-slate-800/60 bg-slate-950/40 overflow-x-auto">
+          <div className="max-w-7xl mx-auto px-6 flex items-center gap-1 py-1.5">
+            {visibleNavs.map((nav) => {
+              const isActive = location.pathname === nav.path;
+              return (
+                <Link
+                  key={nav.path}
+                  to={nav.path}
+                  className={`text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
+                    isActive
+                      ? "bg-indigo-600 text-white font-semibold"
+                      : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                  }`}
+                >
+                  {nav.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
+

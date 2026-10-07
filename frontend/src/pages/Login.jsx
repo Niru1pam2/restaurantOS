@@ -42,7 +42,6 @@ export default function Login() {
 
           {error && (
             <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm font-medium flex items-center gap-2">
-              <span className="text-lg">⚠️</span>
               <span>{error}</span>
             </div>
           )}

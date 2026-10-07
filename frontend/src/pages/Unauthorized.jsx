@@ -6,8 +6,8 @@ export default function Unauthorized() {
     <Layout>
       <div className="w-full max-w-md my-auto text-center">
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-2xl p-8 backdrop-blur-xl space-y-6">
-          <div className="w-16 h-16 mx-auto rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-3xl">
-            🚫
+          <div className="w-16 h-16 mx-auto rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-xl font-bold text-red-400">
+            !
           </div>
           <div>
             <h1 className="text-3xl font-extrabold text-red-400 tracking-tight">403 - Access Denied</h1>

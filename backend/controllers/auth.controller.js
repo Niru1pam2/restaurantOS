@@ -12,11 +12,15 @@ export const register = async (req, res) => {
     const { name, email, password, role } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({ message: "Name, email, and password are required." });
+      return res
+        .status(400)
+        .json({ message: "Name, email, and password are required." });
     }
 
     if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters long." });
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters long." });
     }
 
     const assignedRole = role ? role.toUpperCase() : "WAITER";
@@ -31,7 +35,9 @@ export const register = async (req, res) => {
     });
 
     if (existingUser) {
-      return res.status(400).json({ message: "An account with this email already exists." });
+      return res
+        .status(400)
+        .json({ message: "An account with this email already exists." });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -61,7 +67,9 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required." });
+      return res
+        .status(400)
+        .json({ message: "Email and password are required." });
     }
 
     const user = await prisma.user.findUnique({
@@ -85,14 +93,12 @@ export const login = async (req, res) => {
   }
 };
 
-/**
- * Logout user
- * POST /api/auth/logout
- */
 export const logout = (req, res) => {
   res.cookie("token", "", {
     expires: new Date(0),
     httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
   });
   res.status(200).json({ success: true, message: "Logged out successfully." });
 };
@@ -125,4 +131,3 @@ export const getOwnerOnly = (req, res) => {
 export const getKitchen = (req, res) => {
   res.json({ message: "Kitchen access granted." });
 };
-

@@ -13,7 +13,7 @@ export const generateTokenAndResponse = (user, statusCode, res) => {
   const cookieOptions = {
     expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
   };
 
@@ -23,7 +23,6 @@ export const generateTokenAndResponse = (user, statusCode, res) => {
 
   res.status(statusCode).json({
     success: true,
-    token,
     user: userWithoutPassword,
   });
 };

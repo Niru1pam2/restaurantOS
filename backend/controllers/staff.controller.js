@@ -36,15 +36,32 @@ export const createStaff = catchAsync(async (req, res) => {
 });
 
 export const updateStaff = catchAsync(async (req, res) => {
+  const staffId = Number(req.params.id);
   const { name, email, role, password } = req.body;
+
+  const existingUser = await prisma.user.findUnique({ where: { id: staffId } });
+  if (!existingUser) {
+    return res.status(404).json({ success: false, message: "Staff member not found" });
+  }
+
   const dataToUpdate = {};
   if (name) dataToUpdate.name = name;
-  if (email) dataToUpdate.email = email.toLowerCase();
-  if (role && VALID_ROLES.includes(role.toUpperCase())) dataToUpdate.role = role.toUpperCase();
-  if (password) dataToUpdate.password = await bcrypt.hash(password, 10);
+  if (email && email.toLowerCase() !== existingUser.email) {
+    const emailTaken = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    if (emailTaken) {
+      return res.status(400).json({ success: false, message: "Email already registered" });
+    }
+    dataToUpdate.email = email.toLowerCase();
+  }
+  if (role && VALID_ROLES.includes(role.toUpperCase())) {
+    dataToUpdate.role = role.toUpperCase();
+  }
+  if (password && password.trim() !== "") {
+    dataToUpdate.password = await bcrypt.hash(password, 10);
+  }
 
   const user = await prisma.user.update({
-    where: { id: Number(req.params.id) },
+    where: { id: staffId },
     data: dataToUpdate,
     select: STAFF_SELECT,
   });

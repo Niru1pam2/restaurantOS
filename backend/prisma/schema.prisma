@@ -254,6 +254,7 @@ model Expense {
   id          Int             @id @default(autoincrement())
   title       String
   amount      Float
+  status      String          @default("PAID")
   date        DateTime        @default(now())
   description String?
   categoryId  Int             @map("category_id")
@@ -265,6 +266,7 @@ model Expense {
   user        User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt   DateTime        @default(now()) @map("created_at")
   updatedAt   DateTime        @updatedAt @map("updated_at")
+
   @@map("expenses")
 }
 

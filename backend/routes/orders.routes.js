@@ -13,5 +13,6 @@ router.get("/", authenticate, getOrders);
 router.post("/", authenticate, createOrder);
 router.patch("/:id/status", authenticate, updateOrderStatus);
 router.patch("/:id/payment", authenticate, completePayment);
+router.post("/:id/pay", authenticate, completePayment);
 
 export default router;

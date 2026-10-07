@@ -29,24 +29,62 @@ export const createOrder = catchAsync(async (req, res) => {
   const menuItemIds = items.map((i) => Number(i.menuItemId));
   const dbMenuItems = await prisma.menuItem.findMany({
     where: { id: { in: menuItemIds } },
+    include: { recipeItems: { include: { ingredient: true } } },
   });
   const menuMap = new Map(dbMenuItems.map((m) => [m.id, m]));
 
+  // Check ingredient stock before placing order
+  const requiredIngredients = new Map(); // ingredientId -> { ingredient, totalNeeded }
+
   let subtotal = 0;
-  const orderItemsData = items.map((item) => {
+  const orderItemsData = [];
+
+  for (const item of items) {
     const menu = menuMap.get(Number(item.menuItemId));
-    if (!menu) throw new Error(`Menu item ID ${item.menuItemId} not found`);
+    if (!menu) {
+      return res.status(404).json({ success: false, message: `Menu item ID ${item.menuItemId} not found` });
+    }
     const qty = Number(item.quantity || 1);
     const itemPrice = menu.price * qty;
     subtotal += itemPrice;
 
-    return {
+    orderItemsData.push({
       menuItemId: menu.id,
       quantity: qty,
       price: menu.price,
       notes: item.notes || null,
-    };
-  });
+    });
+
+    for (const rItem of menu.recipeItems || []) {
+      const needed = Number(rItem.quantityRequired) * qty;
+      const ingId = rItem.ingredientId;
+      if (requiredIngredients.has(ingId)) {
+        requiredIngredients.get(ingId).totalNeeded += needed;
+      } else {
+        requiredIngredients.set(ingId, {
+          ingredient: rItem.ingredient,
+          totalNeeded: needed,
+        });
+      }
+    }
+  }
+
+  // Validate sufficient stock for all required ingredients
+  const insufficientList = [];
+  for (const [ingId, { ingredient, totalNeeded }] of requiredIngredients) {
+    if (ingredient.currentStock < totalNeeded) {
+      insufficientList.push(
+        `${ingredient.name} (Required: ${totalNeeded} ${ingredient.unit}, Available: ${ingredient.currentStock} ${ingredient.unit})`
+      );
+    }
+  }
+
+  if (insufficientList.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: `Insufficient stock for order: ${insufficientList.join("; ")}`,
+    });
+  }
 
   const tax = Number((subtotal * 0.05).toFixed(2));
   const totalAmount = Number((subtotal + tax).toFixed(2));
@@ -65,7 +103,7 @@ export const createOrder = catchAsync(async (req, res) => {
     },
     include: {
       table: true,
-      items: { include: { menuItem: true } },
+      items: { include: { menuItem: { include: { recipeItems: true } } } },
     },
   });
 
@@ -74,6 +112,30 @@ export const createOrder = catchAsync(async (req, res) => {
       where: { id: Number(tableId) },
       data: { status: "OCCUPIED" },
     });
+  }
+
+  // Deduct ingredient stock & record stock transactions for each item's recipe
+  for (const item of order.items) {
+    const recipeItems = item.menuItem?.recipeItems || [];
+    for (const rItem of recipeItems) {
+      const neededQty = Number(rItem.quantityRequired) * item.quantity;
+      if (neededQty > 0) {
+        await prisma.ingredient.update({
+          where: { id: rItem.ingredientId },
+          data: { currentStock: { decrement: neededQty } },
+        });
+
+        await prisma.stockTransaction.create({
+          data: {
+            type: "OUT",
+            quantity: neededQty,
+            reason: `Order ${order.orderNumber} - ${item.menuItem.name} x${item.quantity}`,
+            ingredientId: rItem.ingredientId,
+            userId: req.user?.id || null,
+          },
+        });
+      }
+    }
   }
 
   res.status(201).json({ success: true, data: order });
@@ -85,7 +147,7 @@ export const updateOrderStatus = catchAsync(async (req, res) => {
 
   const existingOrder = await prisma.order.findUnique({
     where: { id: Number(id) },
-    include: { items: true },
+    include: { items: { include: { menuItem: { include: { recipeItems: true } } } } },
   });
 
   if (!existingOrder) {
@@ -97,6 +159,32 @@ export const updateOrderStatus = catchAsync(async (req, res) => {
     data: { status },
     include: { table: true, items: { include: { menuItem: true } } },
   });
+
+  // Restore ingredient stock if order is cancelled and wasn't already cancelled
+  if (status === "CANCELLED" && existingOrder.status !== "CANCELLED") {
+    for (const item of existingOrder.items) {
+      const recipeItems = item.menuItem?.recipeItems || [];
+      for (const rItem of recipeItems) {
+        const restoredQty = Number(rItem.quantityRequired) * item.quantity;
+        if (restoredQty > 0) {
+          await prisma.ingredient.update({
+            where: { id: rItem.ingredientId },
+            data: { currentStock: { increment: restoredQty } },
+          });
+
+          await prisma.stockTransaction.create({
+            data: {
+              type: "IN",
+              quantity: restoredQty,
+              reason: `Cancelled Order ${existingOrder.orderNumber} - ${item.menuItem.name} x${item.quantity}`,
+              ingredientId: rItem.ingredientId,
+              userId: req.user?.id || null,
+            },
+          });
+        }
+      }
+    }
+  }
 
   if ((status === "COMPLETED" || status === "CANCELLED") && order.tableId) {
     const activeOrdersCount = await prisma.order.count({

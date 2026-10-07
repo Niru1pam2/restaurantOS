@@ -14,15 +14,18 @@ export const getStockTransactions = catchAsync(async (req, res) => {
 });
 
 export const createStockTransaction = catchAsync(async (req, res) => {
-  const { type, quantity, reason, ingredientId } = req.body;
-  if (!type || !quantity || !ingredientId) {
+  const { type, quantity, quantityChange, reason, notes, ingredientId } = req.body;
+  const rawQty = quantity !== undefined ? quantity : quantityChange;
+  const qty = Number(rawQty);
+  const transactionReason = reason || notes || null;
+
+  if (!type || rawQty === undefined || isNaN(qty) || !ingredientId) {
     return res.status(400).json({
       success: false,
-      message: "type, quantity, and ingredientId are required",
+      message: "type, quantity (or quantityChange), and ingredientId are required",
     });
   }
 
-  const qty = Number(quantity);
   const ing = await prisma.ingredient.findUnique({ where: { id: Number(ingredientId) } });
   if (!ing) return res.status(404).json({ success: false, message: "Ingredient not found" });
 
@@ -40,7 +43,7 @@ export const createStockTransaction = catchAsync(async (req, res) => {
     data: {
       type,
       quantity: qty,
-      reason,
+      reason: transactionReason,
       ingredientId: Number(ingredientId),
       userId: req.user.id,
     },
@@ -63,34 +66,40 @@ export const getPurchaseOrders = catchAsync(async (req, res) => {
 });
 
 export const createPurchaseOrder = catchAsync(async (req, res) => {
-  const { supplierId, expectedDate, notes, items } = req.body;
-  if (!supplierId || !items || items.length === 0) {
-    return res.status(400).json({ success: false, message: "supplierId and items are required" });
+  const { supplierId, expectedDate, notes, items, totalAmount } = req.body;
+  if (!supplierId) {
+    return res.status(400).json({ success: false, message: "supplierId is required" });
   }
 
-  let totalAmount = 0;
-  const poItemsData = items.map((item) => {
-    const qty = Number(item.quantity);
-    const price = Number(item.unitPrice);
-    const itemTotal = qty * price;
-    totalAmount += itemTotal;
-    return {
-      ingredientId: Number(item.ingredientId),
-      quantity: qty,
-      unitPrice: price,
-      totalPrice: itemTotal,
-    };
-  });
+  let calculatedTotal = 0;
+  let poItemsData = [];
 
+  if (Array.isArray(items) && items.length > 0) {
+    poItemsData = items.map((item) => {
+      const qty = Number(item.quantity || 0);
+      const price = Number(item.unitPrice || 0);
+      const itemTotal = qty * price;
+      calculatedTotal += itemTotal;
+      return {
+        ingredientId: Number(item.ingredientId),
+        quantity: qty,
+        unitPrice: price,
+        totalPrice: itemTotal,
+      };
+    });
+  }
+
+  const finalTotalAmount = poItemsData.length > 0 ? calculatedTotal : (Number(totalAmount) || 0);
   const orderNumber = `PO-${Date.now().toString().slice(-6)}`;
+
   const po = await prisma.purchaseOrder.create({
     data: {
       orderNumber,
       supplierId: Number(supplierId),
       expectedDate: expectedDate ? new Date(expectedDate) : null,
       notes,
-      totalAmount,
-      items: { create: poItemsData },
+      totalAmount: finalTotalAmount,
+      items: poItemsData.length > 0 ? { create: poItemsData } : undefined,
     },
     include: { supplier: true, items: { include: { ingredient: true } } },
   });

@@ -1,45 +1,77 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useAuth } from '../store/useAuthStore';
-
-const INITIAL_RECIPES = [
-  {
-    id: 1,
-    dish: 'Truffle Mushroom Risotto',
-    servings: 2,
-    prepTime: '15 mins',
-    cookTime: '25 mins',
-    costPerServing: '$6.40',
-    ingredients: [
-      { name: 'Arborio Rice', amount: '200g' },
-      { name: 'Truffle Oil', amount: '15ml' },
-      { name: 'Button Mushrooms', amount: '150g' },
-      { name: 'Parmesan Cheese', amount: '50g' }
-    ],
-    steps: ['Sauté mushrooms in olive oil', 'Toast arborio rice until translucent', 'Slowly add warm vegetable stock while stirring', 'Finish with truffle oil and parmesan']
-  },
-  {
-    id: 2,
-    dish: 'Wagyu Beef Burger',
-    servings: 1,
-    prepTime: '10 mins',
-    cookTime: '12 mins',
-    costPerServing: '$8.10',
-    ingredients: [
-      { name: 'Wagyu Beef Patty', amount: '200g' },
-      { name: 'Brioche Bun', amount: '1 pc' },
-      { name: 'Aged Cheddar', amount: '2 slices' },
-      { name: 'Caramelized Onion', amount: '40g' }
-    ],
-    steps: ['Sear patty on high heat for 3 mins per side', 'Melt cheddar cheese on top', 'Toast brioche bun with butter', 'Assemble with caramelized onions and sauce']
-  }
-];
+import { getRecipes, createRecipe, deleteRecipeItem } from '../api/recipes.api';
+import { getMenuItems } from '../api/menu.api';
+import { getIngredients } from '../api/ingredients.api';
 
 export default function RecipeManagement() {
-  const [recipes, setRecipes] = useState(INITIAL_RECIPES);
-  const [selectedRecipe, setSelectedRecipe] = useState(INITIAL_RECIPES[0]);
+  const [recipes, setRecipes] = useState([]);
+  const [menuItems, setMenuItems] = useState([]);
+  const [ingredients, setIngredients] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [form, setForm] = useState({ menuItemId: '', ingredientId: '', quantityRequired: '', unit: 'kg' });
   const user = useAuth((s) => s.user);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [resRecipes, resMenu, resIng] = await Promise.all([
+        getRecipes().catch(() => ({ success: false })),
+        getMenuItems().catch(() => ({ success: false })),
+        getIngredients().catch(() => ({ success: false })),
+      ]);
+      if (resRecipes.success) setRecipes(resRecipes.data);
+      if (resMenu.success) setMenuItems(resMenu.data);
+      if (resIng.success) setIngredients(resIng.data);
+    } catch (err) {
+      console.error('Failed to load recipe data', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+    try {
+      const payload = {
+        menuItemId: Number(form.menuItemId),
+        ingredientId: Number(form.ingredientId),
+        quantityRequired: Number(form.quantityRequired),
+        unit: form.unit,
+      };
+      const res = await createRecipe(payload);
+      if (res.success) {
+        // Refresh recipes list
+        fetchData();
+        setModal(false);
+        setForm({ menuItemId: '', ingredientId: '', quantityRequired: '', unit: 'kg' });
+      } else {
+        setErrorMsg(res.message || 'Failed to add recipe item');
+      }
+    } catch (err) {
+      console.error('Failed to create recipe', err);
+      setErrorMsg(err.response?.data?.message || 'Error creating recipe item');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const res = await deleteRecipeItem(id);
+      if (res.success) {
+        setRecipes(recipes.filter((r) => r.id !== id));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <Layout>
@@ -50,76 +82,125 @@ export default function RecipeManagement() {
             <p className="text-slate-400 text-sm">Standardized culinary recipes, ingredient ratios & kitchen prep instructions</p>
           </div>
           {['OWNER', 'MANAGER', 'CHEF'].includes(user?.role) && (
-            <button onClick={() => setModal(true)} className="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl">+ New Recipe</button>
+            <button onClick={() => setModal(true)} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl cursor-pointer">+ New Recipe</button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Recipe List */}
-          <div className="space-y-3">
-            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">All Recipes ({recipes.length})</h2>
-            {recipes.map(r => (
-              <div
-                key={r.id}
-                onClick={() => setSelectedRecipe(r)}
-                className={`p-4 rounded-xl border cursor-pointer transition-all ${selectedRecipe?.id === r.id ? 'bg-indigo-600/10 border-indigo-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'}`}
-              >
-                <h3 className="font-bold text-base">{r.dish}</h3>
-                <div className="flex items-center justify-between text-xs text-slate-400 mt-2">
-                  <span>Prep + Cook: {r.prepTime}</span>
-                  <span className="font-semibold text-emerald-400">{r.costPerServing}/serving</span>
+        {loading ? (
+          <div className="p-8 text-center text-slate-400">Loading recipes...</div>
+        ) : recipes.length === 0 ? (
+          <div className="p-8 text-center text-slate-500 bg-slate-900 border border-slate-800 rounded-2xl">
+            No recipe ingredients found. Click "+ New Recipe" to link ingredients to menu items.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recipes.map((r) => (
+              <div key={r.id} className="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between space-y-4">
+                <div>
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                    <div>
+                      <h3 className="font-bold text-lg text-white">{r.menuItem?.name || `Menu Item #${r.menuItemId}`}</h3>
+                      <span className="text-xs text-emerald-400 font-mono">${Number(r.menuItem?.price || 0).toFixed(2)}</span>
+                    </div>
+                    {['OWNER', 'MANAGER', 'CHEF'].includes(user?.role) && (
+                      <button onClick={() => handleDelete(r.id)} className="text-xs text-rose-400 hover:text-rose-300 cursor-pointer">
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
+                      <div>
+                        <p className="text-xs font-bold text-slate-300">{r.ingredient?.name || `Ingredient #${r.ingredientId}`}</p>
+                        <p className="text-xs text-slate-400 font-mono mt-0.5">Required: {r.quantityRequired} {r.unit}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs text-slate-400 block">Cost/Unit</span>
+                        <span className="text-xs font-mono font-bold text-emerald-400">
+                          ${Number(r.ingredient?.costPerUnit || r.ingredient?.unitCost || 0).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
-
-          {/* Selected Recipe Details */}
-          {selectedRecipe && (
-            <div className="lg:col-span-2 bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-                <div>
-                  <h2 className="text-2xl font-bold text-white">{selectedRecipe.dish}</h2>
-                  <p className="text-xs text-slate-400 mt-1">Servings: {selectedRecipe.servings} | Est. Cost: {selectedRecipe.costPerServing}</p>
-                </div>
-                <span className="bg-indigo-600/20 text-indigo-300 px-3 py-1 rounded-full text-xs font-semibold border border-indigo-500/30">
-                  Prep: {selectedRecipe.prepTime} | Cook: {selectedRecipe.cookTime}
-                </span>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-bold text-slate-300 uppercase mb-3">Required Ingredients</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {selectedRecipe.ingredients.map((ing, idx) => (
-                    <div key={idx} className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                      <p className="text-xs font-bold text-white">{ing.name}</p>
-                      <p className="text-xs text-indigo-400 font-mono mt-0.5">{ing.amount}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-bold text-slate-300 uppercase mb-3">Preparation Steps</h3>
-                <ol className="space-y-2 text-sm text-slate-300 list-decimal list-inside bg-slate-950 p-4 rounded-xl border border-slate-800">
-                  {selectedRecipe.steps.map((st, idx) => (
-                    <li key={idx} className="leading-relaxed"><span className="text-slate-200">{st}</span></li>
-                  ))}
-                </ol>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
 
         {modal && (
           <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md space-y-4">
-              <h3 className="text-lg font-bold text-white">Create Recipe</h3>
-              <form onSubmit={(e) => { e.preventDefault(); const newR = { id: Date.now(), dish: 'New Special Dish', servings: 2, prepTime: '15m', cookTime: '15m', costPerServing: '$5.00', ingredients: [{ name: 'Main Ingredient', amount: '200g' }], steps: ['Mix and cook well'] }; setRecipes([...recipes, newR]); setSelectedRecipe(newR); setModal(false); }} className="space-y-3">
-                <input type="text" required placeholder="Dish Name" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
-                <input type="text" required placeholder="Prep & Cook Time" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+              <h3 className="text-lg font-bold text-white">Add Recipe Ingredient</h3>
+              {errorMsg && (
+                <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs">
+                  {errorMsg}
+                </div>
+              )}
+              <form onSubmit={handleCreate} className="space-y-3">
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1 font-semibold">Select Menu Item</label>
+                  <select
+                    required
+                    value={form.menuItemId}
+                    onChange={(e) => setForm({ ...form, menuItemId: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"
+                  >
+                    <option value="">Select a dish...</option>
+                    {menuItems.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} (${Number(m.price).toFixed(2)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1 font-semibold">Select Ingredient</label>
+                  <select
+                    required
+                    value={form.ingredientId}
+                    onChange={(e) => setForm({ ...form, ingredientId: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"
+                  >
+                    <option value="">Select ingredient...</option>
+                    {ingredients.map((ing) => (
+                      <option key={ing.id} value={ing.id}>
+                        {ing.name} ({ing.unit})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1 font-semibold">Qty Required</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      placeholder="e.g. 0.25"
+                      value={form.quantityRequired}
+                      onChange={(e) => setForm({ ...form, quantityRequired: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1 font-semibold">Unit</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="kg, liters, pcs"
+                      value={form.unit}
+                      onChange={(e) => setForm({ ...form, unit: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"
+                    />
+                  </div>
+                </div>
+
                 <div className="flex gap-2 pt-2">
-                  <button type="button" onClick={() => setModal(false)} className="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-sm">Cancel</button>
-                  <button type="submit" className="flex-1 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold">Save Recipe</button>
+                  <button type="button" onClick={() => setModal(false)} className="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-sm cursor-pointer">Cancel</button>
+                  <button type="submit" className="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold cursor-pointer">Save Recipe Item</button>
                 </div>
               </form>
             </div>

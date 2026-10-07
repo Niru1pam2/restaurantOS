@@ -1,20 +1,60 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useAuth } from '../store/useAuthStore';
-
-const INITIAL_INGREDIENTS = [
-  { id: 1, name: 'Arborio Rice', category: 'Dry Goods', stock: 45, unit: 'kg', reorderLevel: 20, unitCost: 3.50, supplier: 'AgriCorp Global' },
-  { id: 2, name: 'Wagyu Beef Patty', category: 'Meat & Poultry', stock: 12, unit: 'kg', reorderLevel: 15, unitCost: 18.00, supplier: 'Prime Cut Meats' },
-  { id: 3, name: 'Truffle Oil', category: 'Oils & Spices', stock: 5, unit: 'liters', reorderLevel: 8, unitCost: 28.00, supplier: 'Gourmet Imports' },
-  { id: 4, name: 'Parmesan Cheese', category: 'Dairy', stock: 25, unit: 'kg', reorderLevel: 10, unitCost: 12.50, supplier: 'Dairy Fresh Co.' },
-  { id: 5, name: 'Button Mushrooms', category: 'Produce', stock: 8, unit: 'kg', reorderLevel: 10, unitCost: 4.20, supplier: 'Fresh Farms Direct' },
-];
+import { getIngredients, createIngredient } from '../api/ingredients.api';
 
 export default function IngredientManagement() {
-  const [ingredients, setIngredients] = useState(INITIAL_INGREDIENTS);
+  const [ingredients, setIngredients] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
-  const [form, setForm] = useState({ name: '', category: 'Produce', stock: 10, unit: 'kg', reorderLevel: 5, unitCost: 5 });
+  const [errorMsg, setErrorMsg] = useState('');
+  const [form, setForm] = useState({ name: '', category: 'Produce', currentStock: 10, unit: 'kg', minStockLevel: 5, unitCost: 5 });
   const user = useAuth((s) => s.user);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const res = await getIngredients();
+      if (res.success) {
+        setIngredients(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to load ingredients', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+    try {
+      const payload = {
+        name: form.name,
+        category: form.category,
+        currentStock: Number(form.currentStock),
+        unit: form.unit,
+        minStockLevel: Number(form.minStockLevel),
+        costPerUnit: Number(form.unitCost),
+        unitCost: Number(form.unitCost),
+      };
+      const res = await createIngredient(payload);
+      if (res.success) {
+        setIngredients([...ingredients, res.data]);
+        setModal(false);
+        setForm({ name: '', category: 'Produce', currentStock: 10, unit: 'kg', minStockLevel: 5, unitCost: 5 });
+      } else {
+        setErrorMsg(res.message || 'Failed to add ingredient');
+      }
+    } catch (err) {
+      console.error('Failed to create ingredient', err);
+      setErrorMsg(err.response?.data?.message || 'Error creating ingredient');
+    }
+  };
 
   return (
     <Layout>
@@ -25,7 +65,7 @@ export default function IngredientManagement() {
             <p className="text-slate-400 text-sm">Raw ingredients inventory, unit costs & reorder thresholds</p>
           </div>
           {['OWNER', 'MANAGER', 'CHEF'].includes(user?.role) && (
-            <button onClick={() => setModal(true)} className="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl">+ Add Ingredient</button>
+            <button onClick={() => setModal(true)} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl cursor-pointer">+ Add Ingredient</button>
           )}
         </div>
 
@@ -43,23 +83,35 @@ export default function IngredientManagement() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
-                {ingredients.map((ing) => {
-                  const isLow = ing.stock <= ing.reorderLevel;
-                  return (
-                    <tr key={ing.id} className="hover:bg-slate-800/50 transition-colors">
-                      <td className="px-6 py-4 font-bold text-white">{ing.name}</td>
-                      <td className="px-6 py-4 text-xs"><span className="bg-slate-800 text-slate-300 px-2 py-1 rounded-md">{ing.category}</span></td>
-                      <td className="px-6 py-4 font-mono font-semibold text-white">{ing.stock} {ing.unit}</td>
-                      <td className="px-6 py-4 font-mono text-slate-400">{ing.reorderLevel} {ing.unit}</td>
-                      <td className="px-6 py-4 font-mono text-emerald-400">${ing.unitCost.toFixed(2)}</td>
-                      <td className="px-6 py-4">
-                        <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold ${isLow ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'}`}>
-                          {isLow ? 'Low Stock' : 'Optimal'}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400">Loading ingredients...</td>
+                  </tr>
+                ) : ingredients.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">No ingredients found.</td>
+                  </tr>
+                ) : (
+                  ingredients.map((ing) => {
+                    const currentStock = ing.currentStock ?? ing.stock ?? 0;
+                    const minStockLevel = ing.minStockLevel ?? ing.reorderLevel ?? 0;
+                    const isLow = currentStock <= minStockLevel;
+                    return (
+                      <tr key={ing.id} className="hover:bg-slate-800/50 transition-colors">
+                        <td className="px-6 py-4 font-bold text-white">{ing.name}</td>
+                        <td className="px-6 py-4 text-xs"><span className="bg-slate-800 text-slate-300 px-2 py-1 rounded-md">{ing.category || 'General'}</span></td>
+                        <td className="px-6 py-4 font-mono font-semibold text-white">{currentStock} {ing.unit}</td>
+                        <td className="px-6 py-4 font-mono text-slate-400">{minStockLevel} {ing.unit}</td>
+                        <td className="px-6 py-4 font-mono text-emerald-400">${Number(ing.costPerUnit ?? ing.unitCost ?? 0).toFixed(2)}</td>
+                        <td className="px-6 py-4">
+                          <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold ${isLow ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'}`}>
+                            {isLow ? 'Low Stock' : 'Optimal'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
@@ -69,19 +121,24 @@ export default function IngredientManagement() {
           <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md space-y-4">
               <h3 className="text-lg font-bold text-white">Add Ingredient</h3>
-              <form onSubmit={(e) => { e.preventDefault(); setIngredients([...ingredients, { id: Date.now(), name: form.name, category: form.category, stock: Number(form.stock), unit: form.unit, reorderLevel: Number(form.reorderLevel), unitCost: Number(form.unitCost), supplier: 'General Supplier' }]); setModal(false); }} className="space-y-3">
+              {errorMsg && (
+                <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs">
+                  {errorMsg}
+                </div>
+              )}
+              <form onSubmit={handleCreate} className="space-y-3">
                 <input type="text" required placeholder="Ingredient Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 <div className="grid grid-cols-2 gap-2">
-                  <input type="number" required placeholder="Stock" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                  <input type="number" required placeholder="Current Stock" value={form.currentStock} onChange={(e) => setForm({ ...form, currentStock: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                   <input type="text" required placeholder="Unit (kg, liters)" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <input type="number" required placeholder="Reorder Level" value={form.reorderLevel} onChange={(e) => setForm({ ...form, reorderLevel: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                  <input type="number" required placeholder="Reorder Level" value={form.minStockLevel} onChange={(e) => setForm({ ...form, minStockLevel: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                   <input type="number" step="0.01" required placeholder="Unit Cost ($)" value={form.unitCost} onChange={(e) => setForm({ ...form, unitCost: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
                 <div className="flex gap-2 pt-2">
-                  <button type="button" onClick={() => setModal(false)} className="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-sm">Cancel</button>
-                  <button type="submit" className="flex-1 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold">Save</button>
+                  <button type="button" onClick={() => setModal(false)} className="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-sm cursor-pointer">Cancel</button>
+                  <button type="submit" className="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold cursor-pointer">Save</button>
                 </div>
               </form>
             </div>

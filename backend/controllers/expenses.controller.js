@@ -32,23 +32,58 @@ export const getExpenses = catchAsync(async (req, res) => {
 });
 
 export const createExpense = catchAsync(async (req, res) => {
-  const { title, amount, categoryId, supplierId, date, description, receiptUrl } = req.body;
-  if (!title || !amount || !categoryId) {
-    return res.status(400).json({ success: false, message: "Title, amount, and categoryId are required" });
+  const { title, amount, categoryId, category, categoryName, supplierId, vendor, status, date, description, receiptUrl } = req.body;
+  
+  const expenseTitle = title || description;
+  if (!expenseTitle || !amount) {
+    return res.status(400).json({ success: false, message: "Title and amount are required" });
   }
+
+  let finalCategoryId = categoryId ? Number(categoryId) : null;
+
+  if (!finalCategoryId) {
+    const catName = category || categoryName || "General";
+    let dbCategory = await prisma.expenseCategory.findFirst({
+      where: { name: { equals: catName, mode: "insensitive" } },
+    });
+    if (!dbCategory) {
+      dbCategory = await prisma.expenseCategory.create({
+        data: { name: catName },
+      });
+    }
+    finalCategoryId = dbCategory.id;
+  }
+
+  let finalSupplierId = supplierId ? Number(supplierId) : null;
+  if (!finalSupplierId && vendor && typeof vendor === "string" && vendor.trim()) {
+    const vendorName = vendor.trim();
+    let supplier = await prisma.supplier.findFirst({
+      where: { name: { equals: vendorName, mode: "insensitive" } },
+    });
+    if (!supplier) {
+      supplier = await prisma.supplier.create({
+        data: { name: vendorName },
+      });
+    }
+    finalSupplierId = supplier.id;
+  }
+
+  const expenseStatus = status && ["PAID", "PENDING"].includes(status.toUpperCase()) ? status.toUpperCase() : "PAID";
+  const finalDescription = description || (vendor ? `Vendor: ${vendor}` : null);
 
   const expense = await prisma.expense.create({
     data: {
-      title,
+      title: expenseTitle,
       amount: Number(amount),
-      categoryId: Number(categoryId),
-      supplierId: supplierId ? Number(supplierId) : null,
+      status: expenseStatus,
+      categoryId: finalCategoryId,
+      supplierId: finalSupplierId,
       date: date ? new Date(date) : new Date(),
-      description,
+      description: finalDescription,
       receiptUrl,
-      userId: req.user.id,
+      userId: req.user?.id || null,
     },
-    include: { category: true, supplier: true },
+    include: { category: true, supplier: true, user: { select: { id: true, name: true } } },
   });
 
   res.status(201).json({ success: true, data: expense });

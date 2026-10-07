@@ -58,6 +58,16 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/invoices", invoiceRoutes);
 
+// --------------- Global Error Handler ---------------
+app.use((err, req, res, next) => {
+  console.error("Global Error Handler caught:", err);
+  const statusCode = err.statusCode || res.statusCode === 200 ? 500 : res.statusCode;
+  res.status(statusCode).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
+});
+
 // --------------- Start Server ---------------
 app.listen(PORT, async () => {
   try {
@@ -69,4 +79,5 @@ app.listen(PORT, async () => {
   }
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
 

@@ -15,14 +15,15 @@ export const getTables = catchAsync(async (req, res) => {
 });
 
 export const createTable = catchAsync(async (req, res) => {
-  const { tableNumber, capacity, location } = req.body;
+  const tableNumber = req.body.tableNumber || req.body.number;
+  const { capacity, location } = req.body;
   if (!tableNumber) {
     return res.status(400).json({ success: false, message: "Table number is required" });
   }
 
   const table = await prisma.table.create({
     data: {
-      tableNumber,
+      tableNumber: String(tableNumber),
       capacity: Number(capacity) || 4,
       location: location || "Main Dining",
     },
@@ -32,12 +33,13 @@ export const createTable = catchAsync(async (req, res) => {
 
 export const updateTable = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const { tableNumber, capacity, status, location } = req.body;
+  const tableNumber = req.body.tableNumber || req.body.number;
+  const { capacity, status, location } = req.body;
 
   const table = await prisma.table.update({
     where: { id: Number(id) },
     data: {
-      ...(tableNumber && { tableNumber }),
+      ...(tableNumber && { tableNumber: String(tableNumber) }),
       ...(capacity !== undefined && { capacity: Number(capacity) }),
       ...(status && { status }),
       ...(location !== undefined && { location }),
@@ -50,3 +52,4 @@ export const deleteTable = catchAsync(async (req, res) => {
   await prisma.table.delete({ where: { id: Number(req.params.id) } });
   res.json({ success: true, message: "Table deleted successfully" });
 });
+

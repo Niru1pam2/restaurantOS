@@ -7,20 +7,22 @@ import path from "path";
 import { fileURLToPath } from "url";
 import prisma from "./config/db.js";
 
-import authRoutes from "./routes/auth.routes.js";
-import tableRoutes from "./routes/tables.routes.js";
-import categoryRoutes from "./routes/categories.routes.js";
-import menuRoutes from "./routes/menu.routes.js";
-import ingredientRoutes from "./routes/ingredients.routes.js";
-import recipeRoutes from "./routes/recipes.routes.js";
-import supplierRoutes from "./routes/suppliers.routes.js";
-import staffRoutes from "./routes/staff.routes.js";
-import orderRoutes from "./routes/orders.routes.js";
-import inventoryRoutes from "./routes/inventory.routes.js";
-import expenseRoutes from "./routes/expenses.routes.js";
-import dashboardRoutes from "./routes/dashboard.routes.js";
-import aiRoutes from "./routes/ai.routes.js";
-import invoiceRoutes from "./routes/invoices.routes.js";
+import {
+  authRoutes,
+  tableRoutes,
+  categoryRoutes,
+  menuRoutes,
+  ingredientRoutes,
+  recipeRoutes,
+  supplierRoutes,
+  staffRoutes,
+  orderRoutes,
+  inventoryRoutes,
+  expenseRoutes,
+  dashboardRoutes,
+  aiRoutes,
+  invoiceRoutes,
+} from "./routes/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

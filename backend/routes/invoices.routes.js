@@ -23,7 +23,7 @@ const upload = multer({ storage: storage });
 const router = express.Router();
 
 router.get("/", authenticate, getInvoices);
-router.post("/process", authenticate, authorize("OWNER", "MANAGER"), upload.single("file"), processInvoice);
+router.post("/process", authenticate, authorize("OWNER", "MANAGER"), upload.any(), processInvoice);
 router.get("/export-excel", authenticate, exportExpenseRegisterExcel);
 
 export default router;

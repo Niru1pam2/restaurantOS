@@ -102,7 +102,7 @@ export default function IngredientManagement() {
                         <td className="px-6 py-4 text-xs"><span className="bg-slate-800 text-slate-300 px-2 py-1 rounded-md">{ing.category || 'General'}</span></td>
                         <td className="px-6 py-4 font-mono font-semibold text-white">{currentStock} {ing.unit}</td>
                         <td className="px-6 py-4 font-mono text-slate-400">{minStockLevel} {ing.unit}</td>
-                        <td className="px-6 py-4 font-mono text-emerald-400">${Number(ing.costPerUnit ?? ing.unitCost ?? 0).toFixed(2)}</td>
+                        <td className="px-6 py-4 font-mono text-emerald-400">₹{Number(ing.costPerUnit ?? ing.unitCost ?? 0).toFixed(2)}</td>
                         <td className="px-6 py-4">
                           <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold ${isLow ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'}`}>
                             {isLow ? 'Low Stock' : 'Optimal'}
@@ -134,7 +134,7 @@ export default function IngredientManagement() {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <input type="number" required placeholder="Reorder Level" value={form.minStockLevel} onChange={(e) => setForm({ ...form, minStockLevel: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
-                  <input type="number" step="0.01" required placeholder="Unit Cost ($)" value={form.unitCost} onChange={(e) => setForm({ ...form, unitCost: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                  <input type="number" step="0.01" required placeholder="Unit Cost (₹)" value={form.unitCost} onChange={(e) => setForm({ ...form, unitCost: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
                 <div className="flex gap-2 pt-2">
                   <button type="button" onClick={() => setModal(false)} className="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-sm cursor-pointer">Cancel</button>

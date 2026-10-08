@@ -77,15 +77,15 @@ export default function ExpenseManagement() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between">
             <span className="text-slate-400 text-sm">Total Expenses</span>
-            <span className="text-xl font-bold text-rose-400">${totalSpent.toFixed(2)}</span>
+            <span className="text-xl font-bold text-rose-400">₹{totalSpent.toFixed(2)}</span>
           </div>
           <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between">
             <span className="text-slate-400 text-sm">Total Paid</span>
-            <span className="text-xl font-bold text-emerald-400">${totalPaid.toFixed(2)}</span>
+            <span className="text-xl font-bold text-emerald-400">₹{totalPaid.toFixed(2)}</span>
           </div>
           <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between">
             <span className="text-slate-400 text-sm">Pending Approval</span>
-            <span className="text-xl font-bold text-amber-400">${totalPending.toFixed(2)}</span>
+            <span className="text-xl font-bold text-amber-400">₹{totalPending.toFixed(2)}</span>
           </div>
         </div>
 
@@ -126,7 +126,7 @@ export default function ExpenseManagement() {
                         <td className="px-6 py-4 text-xs text-indigo-300">
                           {e.supplier?.name || e.vendor || (e.description?.startsWith('Vendor: ') ? e.description.replace('Vendor: ', '') : null) || 'N/A'}
                         </td>
-                        <td className="px-6 py-4 font-mono font-bold text-rose-400">${Number(e.amount || 0).toFixed(2)}</td>
+                        <td className="px-6 py-4 font-mono font-bold text-rose-400">₹{Number(e.amount || 0).toFixed(2)}</td>
                         <td className="px-6 py-4 text-xs font-mono text-slate-400">{e.createdAt ? new Date(e.createdAt).toLocaleDateString() : (e.date || 'N/A')}</td>
                         <td className="px-6 py-4">
                           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${isPaid ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/30'}`}>
@@ -179,8 +179,8 @@ export default function ExpenseManagement() {
                   <input type="text" placeholder="Vendor Name" value={form.vendor} onChange={(ev) => setForm({ ...form, vendor: ev.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">Amount ($)</label>
-                  <input type="number" step="0.01" required placeholder="Amount ($)" value={form.amount} onChange={(ev) => setForm({ ...form, amount: ev.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                  <label className="block text-xs font-semibold text-slate-400 mb-1">Amount (₹)</label>
+                  <input type="number" step="0.01" required placeholder="Amount (₹)" value={form.amount} onChange={(ev) => setForm({ ...form, amount: ev.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-400 mb-1">Payment Status</label>

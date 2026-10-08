@@ -105,7 +105,7 @@ export default function PurchaseOrders() {
                       <tr key={po.id} className="hover:bg-slate-800/50 transition-colors">
                         <td className="px-6 py-4 font-mono font-bold text-indigo-400">{poCode}</td>
                         <td className="px-6 py-4 font-bold text-white">{supplierName}</td>
-                        <td className="px-6 py-4 font-mono font-bold text-emerald-400">${totalVal}</td>
+                        <td className="px-6 py-4 font-mono font-bold text-emerald-400">₹{totalVal}</td>
                         <td className="px-6 py-4 text-xs font-mono text-slate-400">{po.createdAt ? new Date(po.createdAt).toLocaleDateString() : (po.date || 'N/A')}</td>
                         <td className="px-6 py-4">
                           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${BADGES[statusStr] || BADGES.Pending}`}>
@@ -132,7 +132,7 @@ export default function PurchaseOrders() {
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
                 </select>
-                <input type="number" step="0.01" required placeholder="Total Cost ($)" value={form.totalCost} onChange={(e) => setForm({ ...form, totalCost: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                <input type="number" step="0.01" required placeholder="Total Cost (₹)" value={form.totalCost} onChange={(e) => setForm({ ...form, totalCost: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 <div className="flex gap-2 pt-2">
                   <button type="button" onClick={() => setModal(false)} className="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-sm cursor-pointer">Cancel</button>
                   <button type="submit" className="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold cursor-pointer">Generate PO</button>

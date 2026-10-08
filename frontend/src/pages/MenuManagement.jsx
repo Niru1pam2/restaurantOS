@@ -122,7 +122,7 @@ export default function MenuManagement() {
                 <div>
                   <div className="flex items-start justify-between">
                     <h3 className="text-base font-bold text-white">{item.name}</h3>
-                    <span className="text-sm font-extrabold text-indigo-400">${Number(item.price || 0).toFixed(2)}</span>
+                    <span className="text-sm font-extrabold text-indigo-400">₹{Number(item.price || 0).toFixed(2)}</span>
                   </div>
                   {item.category && (
                     <span className="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700 mt-1 inline-block">
@@ -177,7 +177,7 @@ export default function MenuManagement() {
                   type="number"
                   step="0.01"
                   required
-                  placeholder="Price ($)"
+                  placeholder="Price (₹)"
                   value={form.price}
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"

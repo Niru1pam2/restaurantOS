@@ -93,7 +93,7 @@ export default function InventoryManagement() {
                   </div>
                   <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
                     <span className="text-slate-400">Stock: <strong className="text-white">{currentStock} {it.unit || 'units'}</strong></span>
-                    <span className="font-mono text-emerald-400 font-bold">${Number(it.costPerUnit ?? it.unitCost ?? 0).toFixed(2)}/unit</span>
+                    <span className="font-mono text-emerald-400 font-bold">₹{Number(it.costPerUnit ?? it.unitCost ?? 0).toFixed(2)}/unit</span>
                   </div>
                 </div>
               );
@@ -115,7 +115,7 @@ export default function InventoryManagement() {
                 <input type="text" placeholder="Category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 <div className="grid grid-cols-2 gap-2">
                   <input type="number" required placeholder="Stock Qty" value={form.currentStock} onChange={(e) => setForm({ ...form, currentStock: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
-                  <input type="number" step="0.01" required placeholder="Unit Value ($)" value={form.unitCost} onChange={(e) => setForm({ ...form, unitCost: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                  <input type="number" step="0.01" required placeholder="Unit Value (₹)" value={form.unitCost} onChange={(e) => setForm({ ...form, unitCost: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
                 <div className="flex gap-2 pt-2">
                   <button type="button" onClick={() => setModal(false)} className="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-sm cursor-pointer">Cancel</button>

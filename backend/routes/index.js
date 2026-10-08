@@ -1,0 +1,14 @@
+export { default as authRoutes } from "./auth.routes.js";
+export { default as tableRoutes } from "./tables.routes.js";
+export { default as categoryRoutes } from "./categories.routes.js";
+export { default as menuRoutes } from "./menu.routes.js";
+export { default as ingredientRoutes } from "./ingredients.routes.js";
+export { default as recipeRoutes } from "./recipes.routes.js";
+export { default as supplierRoutes } from "./suppliers.routes.js";
+export { default as staffRoutes } from "./staff.routes.js";
+export { default as orderRoutes } from "./orders.routes.js";
+export { default as inventoryRoutes } from "./inventory.routes.js";
+export { default as expenseRoutes } from "./expenses.routes.js";
+export { default as dashboardRoutes } from "./dashboard.routes.js";
+export { default as aiRoutes } from "./ai.routes.js";
+export { default as invoiceRoutes } from "./invoices.routes.js";

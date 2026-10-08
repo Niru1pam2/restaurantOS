@@ -73,7 +73,7 @@ export default function ReportsAnalytics() {
               <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-2">
                 <span className="text-xs text-slate-400 font-semibold">Total Revenue</span>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-bold text-white font-mono">${Number(totalRevenue).toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-white font-mono">₹{Number(totalRevenue).toFixed(2)}</span>
                   <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400">Live</span>
                 </div>
               </div>
@@ -81,7 +81,7 @@ export default function ReportsAnalytics() {
               <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-2">
                 <span className="text-xs text-slate-400 font-semibold">Total Expenses</span>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-bold text-rose-400 font-mono">${Number(totalExpenseVal).toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-rose-400 font-mono">₹{Number(totalExpenseVal).toFixed(2)}</span>
                   <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-400">Total</span>
                 </div>
               </div>
@@ -90,7 +90,7 @@ export default function ReportsAnalytics() {
                 <span className="text-xs text-slate-400 font-semibold">Net Estimate</span>
                 <div className="flex items-baseline justify-between">
                   <span className={`text-2xl font-bold font-mono ${netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    ${Number(netProfit).toFixed(2)}
+                    ₹{Number(netProfit).toFixed(2)}
                   </span>
                   <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400">Calculated</span>
                 </div>
@@ -122,7 +122,7 @@ export default function ReportsAnalytics() {
                             <p className="text-sm font-bold text-white">{item.title || item.description || 'Expense'}</p>
                             <p className="text-xs text-slate-400 font-mono mt-0.5">{catName} • <span className="text-indigo-400">{vendorName}</span></p>
                           </div>
-                          <span className="text-sm font-mono font-bold text-rose-400">${Number(item.amount || 0).toFixed(2)}</span>
+                          <span className="text-sm font-mono font-bold text-rose-400">₹{Number(item.amount || 0).toFixed(2)}</span>
                         </div>
                       );
                     })}
@@ -140,7 +140,7 @@ export default function ReportsAnalytics() {
                       <div key={idx}>
                         <div className="flex justify-between text-xs text-slate-400 mb-1">
                           <span className="font-semibold text-white">{item.categoryName}</span>
-                          <span className="font-mono text-slate-300">{item.percent}% (${item.amount.toFixed(2)})</span>
+                          <span className="font-mono text-slate-300">{item.percent}% (₹{item.amount.toFixed(2)})</span>
                         </div>
                         <div className="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800">
                           <div className="bg-indigo-500 h-full" style={{ width: `${item.percent}%` }}></div>

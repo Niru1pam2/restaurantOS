@@ -175,7 +175,7 @@ export default function OrderManagement() {
                 <div className="flex items-center justify-between pt-3 border-t border-slate-800">
                   <div>
                     <span className="text-xs text-slate-400">Total: </span>
-                    <span className="text-base font-bold text-white">${Number(o.totalAmount || 0).toFixed(2)}</span>
+                    <span className="text-base font-bold text-white">₹{Number(o.totalAmount || 0).toFixed(2)}</span>
                   </div>
                   <select value={o.status} onChange={(e) => handleStatusChange(o.id, e.target.value)} className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-white">
                     <option value="PENDING">PENDING</option>
@@ -233,7 +233,7 @@ export default function OrderManagement() {
                           <div key={m.id} className="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-800">
                             <div>
                               <span className="text-sm font-semibold text-white">{m.name}</span>
-                              <span className="block text-xs text-indigo-400 font-mono">${Number(m.price).toFixed(2)}</span>
+                              <span className="block text-xs text-indigo-400 font-mono">₹{Number(m.price).toFixed(2)}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               {qty > 0 && (
@@ -276,7 +276,7 @@ export default function OrderManagement() {
                   <div>
                     <span className="text-xs text-slate-400">Estimated Total:</span>
                     <span className="block text-lg font-bold text-emerald-400 font-mono">
-                      ${Object.entries(selectedItems).reduce((sum, [id, q]) => {
+                      ₹{Object.entries(selectedItems).reduce((sum, [id, q]) => {
                         const item = menuItems.find((m) => m.id === Number(id));
                         return sum + (item ? item.price * q : 0);
                       }, 0).toFixed(2)}

@@ -100,7 +100,7 @@ export default function RecipeManagement() {
                   <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                     <div>
                       <h3 className="font-bold text-lg text-white">{r.menuItem?.name || `Menu Item #${r.menuItemId}`}</h3>
-                      <span className="text-xs text-emerald-400 font-mono">${Number(r.menuItem?.price || 0).toFixed(2)}</span>
+                      <span className="text-xs text-emerald-400 font-mono">₹{Number(r.menuItem?.price || 0).toFixed(2)}</span>
                     </div>
                     {['OWNER', 'MANAGER', 'CHEF'].includes(user?.role) && (
                       <button onClick={() => handleDelete(r.id)} className="text-xs text-rose-400 hover:text-rose-300 cursor-pointer">
@@ -117,7 +117,7 @@ export default function RecipeManagement() {
                       <div className="text-right">
                         <span className="text-xs text-slate-400 block">Cost/Unit</span>
                         <span className="text-xs font-mono font-bold text-emerald-400">
-                          ${Number(r.ingredient?.costPerUnit || r.ingredient?.unitCost || 0).toFixed(2)}
+                          ₹{Number(r.ingredient?.costPerUnit || r.ingredient?.unitCost || 0).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -149,7 +149,7 @@ export default function RecipeManagement() {
                     <option value="">Select a dish...</option>
                     {menuItems.map((m) => (
                       <option key={m.id} value={m.id}>
-                        {m.name} (${Number(m.price).toFixed(2)})
+                        {m.name} (₹{Number(m.price).toFixed(2)})
                       </option>
                     ))}
                   </select>

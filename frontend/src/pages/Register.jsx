@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/useAuthStore';
 import Layout from '../components/Layout';
+import { FiUser, FiMail, FiLock, FiShield, FiArrowRight } from 'react-icons/fi';
 
 const BACKEND_ROLES = [
   { value: 'OWNER', label: 'Owner' },
@@ -46,95 +47,122 @@ export default function Register() {
 
   return (
     <Layout>
-      <div className="w-full max-w-md my-auto">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-2xl p-8 backdrop-blur-xl">
+      <div className="w-full max-w-md my-auto py-8">
+        <div className="bg-white/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-lg dark:shadow-2xl p-8 backdrop-blur-xl transition-colors">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-white tracking-tight">Create Account</h2>
-            <p className="text-slate-400 text-sm mt-2">Register staff members with backend roles</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Create Account</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-xs mt-1.5">Register staff members with designated role permissions</p>
           </div>
 
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm font-medium flex items-center gap-2">
+            <div className="mb-6 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-rose-300 text-xs font-medium flex items-center gap-2">
               <span>{error}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+              <label htmlFor="name" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 Full Name
               </label>
-              <input
-                id="name"
-                type="text"
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm"
-                placeholder="Gordon Ramsay"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <FiUser className="w-4 h-4" />
+                </div>
+                <input
+                  id="name"
+                  type="text"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-slate-900 dark:focus:border-indigo-500 text-sm transition-colors"
+                  placeholder="Gordon Ramsay"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+              <label htmlFor="email" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 Email Address
               </label>
-              <input
-                id="email"
-                type="email"
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm"
-                placeholder="chef@restaurant.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <FiMail className="w-4 h-4" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-slate-900 dark:focus:border-indigo-500 text-sm transition-colors"
+                  placeholder="chef@restaurant.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+              <label htmlFor="password" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm"
-                placeholder="At least 6 characters"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <FiLock className="w-4 h-4" />
+                </div>
+                <input
+                  id="password"
+                  type="password"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-slate-900 dark:focus:border-indigo-500 text-sm transition-colors"
+                  placeholder="At least 6 characters"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
             </div>
 
             <div>
-              <label htmlFor="role" className="block text-xs font-semibold text-slate-300 uppercase mb-1">
-                Backend Role
+              <label htmlFor="role" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                Role Permission
               </label>
-              <select
-                id="role"
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-indigo-500 text-sm cursor-pointer"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-              >
-                {BACKEND_ROLES.map((r) => (
-                  <option key={r.value} value={r.value} className="bg-slate-900 text-white">
-                    {r.label} ({r.value})
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <FiShield className="w-4 h-4" />
+                </div>
+                <select
+                  id="role"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-slate-900 dark:focus:border-indigo-500 text-sm cursor-pointer transition-colors"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                >
+                  {BACKEND_ROLES.map((r) => (
+                    <option key={r.value} value={r.value} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                      {r.label} ({r.value})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full mt-2 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-900 text-white font-semibold text-sm shadow-lg shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full mt-2 py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              {isSubmitting ? 'Creating Account...' : 'Register'}
+              {isSubmitting ? (
+                <span>Creating Account...</span>
+              ) : (
+                <>
+                  <span>Register</span>
+                  <FiArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-slate-800 text-center text-sm text-slate-400">
+          <div className="mt-6 pt-5 border-t border-slate-200/80 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
             Already have an account?{' '}
-            <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-medium underline">
+            <Link to="/login" className="text-slate-900 dark:text-indigo-400 hover:underline font-semibold">
               Sign in here
             </Link>
           </div>

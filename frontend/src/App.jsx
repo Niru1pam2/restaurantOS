@@ -17,6 +17,8 @@ import StockTransactions from './pages/StockTransactions';
 import PurchaseOrders from './pages/PurchaseOrders';
 import ExpenseManagement from './pages/ExpenseManagement';
 import ReportsAnalytics from './pages/ReportsAnalytics';
+import AiInsights from './pages/AiInsights';
+import AiInvoiceProcessing from './pages/AiInvoiceProcessing';
 import Unauthorized from './pages/Unauthorized';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
@@ -49,6 +51,7 @@ function App() {
 
         {/* Role Restricted Routes */}
         <Route element={<ProtectedRoute allowedRoles={['OWNER', 'MANAGER', 'CHEF']} />}>
+          <Route path="/ai-insights" element={<AiInsights />} />
           <Route path="/menu" element={<MenuManagement />} />
           <Route path="/recipes" element={<RecipeManagement />} />
           <Route path="/ingredients" element={<IngredientManagement />} />
@@ -57,6 +60,7 @@ function App() {
         </Route>
 
         <Route element={<ProtectedRoute allowedRoles={['OWNER', 'MANAGER']} />}>
+          <Route path="/invoices" element={<AiInvoiceProcessing />} />
           <Route path="/suppliers" element={<SupplierManagement />} />
           <Route path="/staff" element={<StaffManagement />} />
           <Route path="/purchase-orders" element={<PurchaseOrders />} />
